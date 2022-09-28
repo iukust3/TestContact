@@ -1,9 +1,9 @@
 # TestContact
 # contact-list-sample
 Features implemented using
- ☛ mvvm 
- ☛ Jetpack Compose UI 
- ☛ Paging 3 
+\n ☛ mvvm \n
+ ☛ Jetpack Compose UI \n
+ ☛ Paging 3 \n
  ☛ Room Live Data
  ☛ LazyCoulumn
  ☛ Navagation Host
@@ -51,7 +51,7 @@ Features implemented using
 4. Delete contact functionality
 
 ## Screen shots
-![screenshot1](https://github.com/iukust3/TestContact/blob/master/img_details.png)
+![screenshot1](https://github.com/iukust3/TestContact/blob/master/img_delete.png)
 
 5. Export Contact as JSON AND XML and share:
   [JSON FILE](https://github.com/iukust3/TestContact/blob/master/Contacts.json).
