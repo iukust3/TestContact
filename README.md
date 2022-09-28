@@ -1,16 +1,16 @@
 # TestContact
 # contact-list-sample
 Features implemented using
-> ☛ mvvm 
-> ☛ Jetpack Compose UI 
-> ☛ Paging 3 
-> ☛ Room Live Data
-> ☛ LazyCoulumn
-> ☛ Navagation Host
-> ☛ Coroutine 
- Features: 
-1. Import and parse xml of contacts and save in room database
-2.Load data using pagging 3 
+#> ☛ mvvm 
+#> ☛ Jetpack Compose UI 
+#> ☛ Paging 3 
+#> ☛ Room Live Data
+#> ☛ LazyCoulumn
+#> ☛ Navagation Host
+#> ☛ Coroutine 
+# Features: 
+# 1. Import and parse xml of contacts and save in room database
+# 2.Load data using pagging 3 
 
 ```
   val contactPagging = Pager(PagingConfig(
@@ -22,7 +22,7 @@ Features implemented using
     }.flow.cachedIn(viewModelScope)
 ```
 
-3. Showing all the data in LazyColumn
+# 3. Showing all the data in LazyColumn
 ```
  LazyColumn(
         modifier = modifier.padding(top = 10.dp),
