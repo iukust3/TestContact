@@ -11,8 +11,7 @@ Features implemented using
  Features: 
 1. Import and parse xml of contacts and save in room database
 2.Load data using pagging 3 
-## Screen shots
-![screenshot1](https://github.com/iukust3/TestContact/blob/master/main_image.png)
+
 ```
   val contactPagging = Pager(PagingConfig(
         pageSize = 10,
@@ -46,19 +45,33 @@ Features implemented using
             }
         }
 ```
+## Screen shots
+![screenshot1](https://github.com/iukust3/TestContact/blob/master/main_image.png)
+
 4. Delete contact functionality
-5. Share contact information as json object
-6. Search functionality
-
-
-## what's next or how can we improve this ??? 
-
-1. Add contact functionality but first we should use fragments to create new form to add contact
-2. add pagination
-3. use of Flow
-4. Add unit test classes
 
 ## Screen shots
-![screenshot1](https://github.com/ahsanbhatti49/contact-list-sample/blob/main/screenshot_1.jpg?raw=true "screenshot1")
-![screenshot2](https://github.com/ahsanbhatti49/contact-list-sample/blob/main/screenshot_2.jpg?raw=true "screenshot2")
+![screenshot1](https://github.com/iukust3/TestContact/blob/master/img_details.png)
 
+5. Export Contact as JSON AND XML and share:
+  [JSON FILE](https://github.com/iukust3/TestContact/blob/master/Contacts.json).
+  [XML FILE](https://github.com/iukust3/TestContact/blob/master/contats.xml). 
+
+6. Edit Contact:
+
+## Screen shots
+![screenshot1](https://github.com/iukust3/TestContact/blob/master/img_edit.png)
+
+7.Add Contact
+## Screen shots
+![screenshot1](https://github.com/iukust3/TestContact/blob/master/image_add_new.png)
+
+8.View Contact Details
+
+## Screen shots
+![screenshot1](https://github.com/iukust3/TestContact/blob/master/img_details.png)
+9. Direct Call
+10.Direct Email
+
+> Need Search functnolity to implment
+> Need WhatsApp and other social links  to implment
