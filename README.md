@@ -1,7 +1,7 @@
 # TestContact
 # contact-list-sample
 Features implemented using
-#> ☛ mvvm 
+> # ☛ mvvm </br>
 #> ☛ Jetpack Compose UI 
 #> ☛ Paging 3 
 #> ☛ Room Live Data
