@@ -1,13 +1,13 @@
 # TestContact
 # contact-list-sample
 Features implemented using
-\n ☛ mvvm \n
- ☛ Jetpack Compose UI \n
- ☛ Paging 3 \n
- ☛ Room Live Data
- ☛ LazyCoulumn
- ☛ Navagation Host
- ☛ Coroutine 
+> ☛ mvvm 
+> ☛ Jetpack Compose UI 
+> ☛ Paging 3 
+> ☛ Room Live Data
+> ☛ LazyCoulumn
+> ☛ Navagation Host
+> ☛ Coroutine 
  Features: 
 1. Import and parse xml of contacts and save in room database
 2.Load data using pagging 3 
