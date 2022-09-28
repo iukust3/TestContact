@@ -6,7 +6,6 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -17,7 +16,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,11 +37,14 @@ import com.example.contacttext.ui.fragment.EditFragment
 import com.example.contacttext.ui.fragment.detials.DetailFragment
 import com.example.contacttext.ui.fragment.home.HomeFragment
 import com.example.contacttext.ui.theme.ContactTextTheme
-import com.example.contacttext.utials.*
 import com.example.contacttext.utials.Const.DETAIL_ARG_ID
 import com.example.contacttext.utials.Const.DETAIL_SCREEN
 import com.example.contacttext.utials.Const.EDIT_SCREEN
 import com.example.contacttext.utials.Const.HOME_SCREEN
+import com.example.contacttext.utials.Result
+import com.example.contacttext.utials.Route
+import com.example.contacttext.utials.Utils
+import com.example.contacttext.utials.XmlParser
 import com.example.contacttext.viewmodel.ContactsViewModel
 import com.google.gson.Gson
 import com.thoughtworks.xstream.XStream
@@ -53,52 +58,66 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    var resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            // There are no request codes
-            val data: Intent? = result.data
-            data.also {
-                Log.e("TAG"," On Result "+it!!.data)
-                var uri=it.data
-                if(uri!=null){
-                    showProgressDilog.value=true;
-                    if(uri.toString().endsWith(".xml")){
-                        GlobalScope.launch (Dispatchers.IO){
-                           var pars= xmlParser.parseXml()
-                            when(pars){
-                                is Result.Success->{
-                                    showProgressDilog.value=false;
-                                    runOnUiThread {
+    var resultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // There are no request codes
+                val data: Intent? = result.data
+                data.also {
+                    Log.e("TAG", " On Result " + it!!.data)
+                    var uri = it.data
+                    if (uri != null) {
+                        showProgressDilog.value = true;
+                        if (uri.toString().endsWith(".xml")) {
+                            GlobalScope.launch(Dispatchers.IO) {
+                                var pars = xmlParser.parseXml()
+                                when (pars) {
+                                    is Result.Success -> {
+                                        showProgressDilog.value = false;
+                                        runOnUiThread {
 
-                                        Toast.makeText(this@MainActivity,"Import Done",Toast.LENGTH_LONG).show()
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "Import Done",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+
                                     }
+                                    else -> {
+                                        showProgressDilog.value = false;
+                                        runOnUiThread {
 
-                                }
-                                else ->{
-                                    showProgressDilog.value=false;
-                                    runOnUiThread {
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "Error While Import",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
 
-                                        Toast.makeText(this@MainActivity,"Error While Import",Toast.LENGTH_LONG).show()
                                     }
-
                                 }
                             }
-                        }
 
-                    }else {
-                        Toast.makeText(this@MainActivity,"Only xml file supported",Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Only xml file supported",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
                 }
+                Log.e("TAG", " On Result ")
             }
-Log.e("TAG"," On Result ")
         }
-    }
 
     val items = listOf(
         MenuItems(Icons.Default.Refresh, "Import Xml"),
         MenuItems(Icons.Default.Send, "Export Xml"),
         MenuItems(Icons.Default.Send, "Export Json")
     )
+
     @Inject
     lateinit var xmlParser: XmlParser
 
@@ -108,7 +127,7 @@ Log.e("TAG"," On Result ")
         super.onCreate(savedInstanceState)
         setContent {
             ContactTextTheme {
-                var contactsViewModel: ContactsViewModel= hiltViewModel()
+                var contactsViewModel: ContactsViewModel = hiltViewModel()
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
                 val navController = rememberNavController()
@@ -121,103 +140,113 @@ Log.e("TAG"," On Result ")
 
                 ModalNavigationDrawer(
                     drawerContent = {
-                        if(curentPage.value==HOME_SCREEN)
-                        ModalDrawerSheet {
-                            Spacer(Modifier.height(12.dp))
-                            items.forEach { item ->
-                                NavigationDrawerItem(
-                                    icon = { Icon(item.icon, contentDescription = null) },
-                                    label = { Text(item.name) },
-                                    selected = item == selectedItem.value,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        selectedItem.value = item
-                                        if (item.name == "Import Xml") {
-                                            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                                                addCategory(Intent.CATEGORY_OPENABLE)
-                                                type = "*/*"
+                        if (curentPage.value == HOME_SCREEN)
+                            ModalDrawerSheet {
+                                Spacer(Modifier.height(12.dp))
+                                items.forEach { item ->
+                                    NavigationDrawerItem(
+                                        icon = { Icon(item.icon, contentDescription = null) },
+                                        label = { Text(item.name) },
+                                        selected = item == selectedItem.value,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            selectedItem.value = item
+                                            if (item.name == "Import Xml") {
+                                                val intent =
+                                                    Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                                        addCategory(Intent.CATEGORY_OPENABLE)
+                                                        type = "*/*"
 
-                                                // Optionally, specify a URI for the file that should appear in the
-                                                // system file picker when it loads.
+                                                        // Optionally, specify a URI for the file that should appear in the
+                                                        // system file picker when it loads.
 
-                                            }
+                                                    }
 
-                                            resultLauncher.launch(intent)
+                                                resultLauncher.launch(intent)
 
-                                           // navController.navigate(Route.Detail.createRoute(1))
-                                            importXml.value = true
-                                            showProgressDilog.value=true
-                                            scope.launch {
-                                                var result = xmlParser.parseXml()
-                                                if (result is Result.Success) {
-                                                    importXml.value = false
-                                                    showProgressDilog.value=false
-                                                } else if (result is Result.Error) {
-                                                    Log.e(
-                                                        "TAG",
-                                                        " Error " + result.exception.message
-                                                    )
-                                                    showProgressDilog.value=false
-                                                    result.exception.printStackTrace()
+                                                // navController.navigate(Route.Detail.createRoute(1))
+                                                importXml.value = true
+                                                showProgressDilog.value = true
+                                                scope.launch {
+                                                    var result = xmlParser.parseXml()
+                                                    if (result is Result.Success) {
+                                                        importXml.value = false
+                                                        showProgressDilog.value = false
+                                                    } else if (result is Result.Error) {
+                                                        Log.e(
+                                                            "TAG",
+                                                            " Error " + result.exception.message
+                                                        )
+                                                        showProgressDilog.value = false
+                                                        result.exception.printStackTrace()
+                                                    }
                                                 }
-                                            }
-                                        }else if(item.name == "Export Xml"){
-                                            showProgressDilog.value=true
-                                            scope.launch {
+                                            } else if (item.name == "Export Xml") {
+                                                showProgressDilog.value = true
+                                                scope.launch {
 
 
-                                                try {
-                                                    var data=contactsViewModel.getAllContacts()
-                                                    val xstream = XStream()
-                                                    xstream.alias("Contact", Contact::class.java)
-                                                    xstream.alias("AddressBook", List::class.java)
+                                                    try {
+                                                        var data =
+                                                            contactsViewModel.getAllContacts()
+                                                        val xstream = XStream()
+                                                        xstream.alias(
+                                                            "Contact",
+                                                            Contact::class.java
+                                                        )
+                                                        xstream.alias(
+                                                            "AddressBook",
+                                                            List::class.java
+                                                        )
 
 
-                                                    val xml = xstream.toXML(data)
-                                                    var path=   Utils().xmlToFile(xml)
-                                                    var file= File(path)
-                                                    val intent = Intent()
-                                                    intent.action = Intent.ACTION_SEND
-                                                    intent.setDataAndType(
-                                                        Uri.fromFile(file),
-                                                        "application/xhtml+xml"
-                                                    )
+                                                        val xml = xstream.toXML(data)
+                                                        var path = Utils().xmlToFile(xml)
+                                                        var file = File(path)
+                                                        val intent = Intent()
+                                                        intent.action = Intent.ACTION_SEND
+                                                        intent.setDataAndType(
+                                                            Uri.fromFile(file),
+                                                            "application/xhtml+xml"
+                                                        )
+                                                        startActivity(intent)
+                                                    } catch (e: Exception) {
+                                                    }
+                                                    showProgressDilog.value = false
+                                                }
+                                            } else if (item.name == "Export Json") {
+                                                showProgressDilog.value = true
+                                                scope.launch {
+                                                    try {
+                                                        var data =
+                                                            contactsViewModel.getAllContacts()
+                                                        var path =
+                                                            Utils().objectToFile(Gson().toJson(data))
+                                                        var file = File(path)
+
+                                                        val intent = Intent()
+                                                        intent.action = Intent.ACTION_SEND
+                                                        intent.setDataAndType(
+                                                            Uri.fromFile(file),
+                                                            "txt/*"
+                                                        )
+                                                        startActivity(intent)
+                                                    } catch (anfe: ActivityNotFoundException) {
+                                                        Toast.makeText(
+                                                            this@MainActivity,
+                                                            "No activity found to open this attachment.",
+                                                            Toast.LENGTH_LONG
+                                                        ).show()
+                                                    }
                                                     startActivity(intent)
-                                                } catch (e: Exception) {
+                                                    showProgressDilog.value = false
                                                 }
-                                                showProgressDilog.value=false
                                             }
-                                        }else if(item.name == "Export Json"){
-                                            showProgressDilog.value=true
-                                            scope.launch {
-                                                try{
-                                                var data=contactsViewModel.getAllContacts()
-                                                var path=   Utils().objectToFile(Gson().toJson(data))
-                                                var file= File(path)
-
-                                                val intent = Intent()
-                                                intent.action = Intent.ACTION_SEND
-                                                intent.setDataAndType(
-                                                    Uri.fromFile(file),
-                                                    "txt/*"
-                                                )
-                                                startActivity(intent)
-                                                } catch (anfe: ActivityNotFoundException) {
-                                                    Toast.makeText(
-                                                      this@MainActivity,
-                                                        "No activity found to open this attachment.",
-                                                        Toast.LENGTH_LONG
-                                                    ).show()
-                                                }
-                                                startActivity(intent)
-                                                showProgressDilog.value=false
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
+                                }
                             }
-                        }
                     },
                     modifier = Modifier.fillMaxSize(),
                     drawerState = drawerState,
@@ -225,18 +254,18 @@ Log.e("TAG"," On Result ")
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         topBar = {
-                      TopAppBar(
+                            TopAppBar(
                                 title = {
-                                    if(curentPage.value== HOME_SCREEN)
-                                    Text(
-                                        "My Contact App",
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                                    if (curentPage.value == HOME_SCREEN)
+                                        Text(
+                                            "My Contact App",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
 
                                 },
                                 actions = {
-                                    if(curentPage.value== DETAIL_SCREEN) {
+                                    if (curentPage.value == DETAIL_SCREEN) {
                                         Icon(
                                             imageVector = Icons.Default.Edit,
                                             contentDescription = "",
@@ -245,7 +274,7 @@ Log.e("TAG"," On Result ")
                                                 navController.navigate(
                                                     Route.Edit.createRoute(contact!!.id)
                                                 )
-                                                curentPage.value= EDIT_SCREEN
+                                                curentPage.value = EDIT_SCREEN
                                             }
                                         )
 
@@ -254,23 +283,27 @@ Log.e("TAG"," On Result ")
                                             imageVector = Icons.Default.Delete,
                                             contentDescription = "",
                                             modifier = Modifier.clickable {
-var alertDialog=android.app. AlertDialog.Builder(this@MainActivity)
+                                                var alertDialog =
+                                                    android.app.AlertDialog.Builder(this@MainActivity)
                                                 alertDialog.setTitle("Delete Contact")
                                                 alertDialog.setMessage("Are you sure to delete this contact?")
-                                                alertDialog.setPositiveButton("No"
+                                                alertDialog.setPositiveButton(
+                                                    "No"
                                                 ) { p0, p1 -> p0?.dismiss() }
-                                                alertDialog.setNegativeButton("Yes"
-                                                ) { p0, p1 -> kotlin.run {
-                                                    scope.launch {
-                                                        contactsViewModel.deleteContact(contact)
+                                                alertDialog.setNegativeButton(
+                                                    "Yes"
+                                                ) { p0, p1 ->
+                                                    kotlin.run {
+                                                        scope.launch {
+                                                            contactsViewModel.deleteContact(contact)
 
-                                                        navController.navigate(
-                                                            Route.Home.route
-                                                        )
-                                                        curentPage.value= HOME_SCREEN
+                                                            navController.navigate(
+                                                                Route.Home.route
+                                                            )
+                                                            curentPage.value = HOME_SCREEN
+                                                        }
+                                                        p0?.dismiss()
                                                     }
-                                                    p0?.dismiss()
-                                                }
 
                                                 }
                                                 alertDialog.show()
@@ -282,17 +315,17 @@ var alertDialog=android.app. AlertDialog.Builder(this@MainActivity)
                                 },
                                 navigationIcon = {
                                     IconButton(onClick = {
-                                        if(curentPage.value== HOME_SCREEN)
-                                        scope.launch {
-                                            drawerState.open()
-                                        }
+                                        if (curentPage.value == HOME_SCREEN)
+                                            scope.launch {
+                                                drawerState.open()
+                                            }
                                         else {
                                             navController.navigate(Route.Home.route)
-                                            curentPage.value= HOME_SCREEN
+                                            curentPage.value = HOME_SCREEN
                                         }
                                     }) {
                                         Icon(
-                                            imageVector = if(curentPage.value==HOME_SCREEN) Icons.Filled.Menu else Icons.Filled.ArrowBack,
+                                            imageVector = if (curentPage.value == HOME_SCREEN) Icons.Filled.Menu else Icons.Filled.ArrowBack,
                                             contentDescription = "Localized description"
                                         )
                                     }
@@ -304,52 +337,59 @@ var alertDialog=android.app. AlertDialog.Builder(this@MainActivity)
 
                         if (importXml.value) {
                             LoadingCircular()
-                        } else{
+                        } else {
                             Surface(modifier = Modifier.padding(top = it.calculateTopPadding())) {
                                 JetpackComposeAppScreen(navController)
                             }
                         }
 
                     }
-progressDilog()
+                    progressDilog()
                 }
             }
         }
     }
 
     override fun onBackPressed() {
-        curentPage.value= HOME_SCREEN
+        curentPage.value = HOME_SCREEN
         super.onBackPressed()
     }
 }
-var oneEdit= mutableStateOf(false)
-var onDelete= mutableStateOf(false)
-var curentPage= mutableStateOf(HOME_SCREEN)
+
+var oneEdit = mutableStateOf(false)
+var onDelete = mutableStateOf(false)
+var curentPage = mutableStateOf(HOME_SCREEN)
+
 @Composable
 fun Greeting(name: String) {
     Text(text = "Hello $name!")
 }
-var showProgressDilog= mutableStateOf(false)
+
+var showProgressDilog = mutableStateOf(false)
+
 @Composable
-fun progressDilog(){
-    if(showProgressDilog.value){
-      AlertDialog(
-          onDismissRequest = {
-                      showProgressDilog.value=false
-      }, title = {
-              Column() {
-                  Text(text = "Loading data...")
-                  LoadingCircular()
-              }
+fun progressDilog() {
+    if (showProgressDilog.value) {
+        AlertDialog(
+            onDismissRequest = {
+                showProgressDilog.value = false
+            },
+            title = {
+                Column() {
+                    Text(text = "Loading data...")
+                    LoadingCircular()
+                }
 
-      }, confirmButton = {},
+            },
+            confirmButton = {},
 
 
-      )
+            )
     }
 }
 
-var contact:Contact?=null
+var contact: Contact? = null
+
 @Composable
 fun JetpackComposeAppScreen(navController: NavHostController) {
 
@@ -361,15 +401,15 @@ fun JetpackComposeAppScreen(navController: NavHostController) {
             HomeFragment(
 
                 onClickToDetailScreen = { contatcId ->
-                    contact=contatcId
-                    curentPage.value= DETAIL_SCREEN
+                    contact = contatcId
+                    curentPage.value = DETAIL_SCREEN
                     navController.navigate(
                         Route.Detail.createRoute(contatcId.id)
                     )
-                    Log.e("TAG"," Id  "+ navController.currentBackStackEntry?.id)
+                    Log.e("TAG", " Id  " + navController.currentBackStackEntry?.id)
                 },
                 onclickToAddContact = {
-                    curentPage.value= EDIT_SCREEN
+                    curentPage.value = EDIT_SCREEN
                     navController.navigate(
                         Route.Edit.createRoute(0)
                     )
@@ -386,7 +426,7 @@ fun JetpackComposeAppScreen(navController: NavHostController) {
         ) { backStackEntry ->
             val contactId = backStackEntry.arguments?.getInt(DETAIL_ARG_ID)
             requireNotNull(contactId) { "contactId parameter wasn't found. Please make sure it's set!" }
-             DetailFragment(id = contactId)
+            DetailFragment(id = contactId)
         }
         composable(
             route = Route.Edit.route,
@@ -398,17 +438,16 @@ fun JetpackComposeAppScreen(navController: NavHostController) {
         ) { backStackEntry ->
             val contactId = backStackEntry.arguments?.getInt(DETAIL_ARG_ID)
             requireNotNull(contactId) { "contactId parameter wasn't found. Please make sure it's set!" }
-             EditFragment(id = contactId, navController = navController){
-                     contactId->
+            EditFragment(id = contactId, navController = navController) { contactId ->
 
-                     contact=contactId
-                     curentPage.value= DETAIL_SCREEN
-                     navController.navigate(
-                         Route.Detail.createRoute(contactId.id)
-                     )
-                     Log.e("TAG"," Id  "+ navController.currentBackStackEntry?.id)
+                contact = contactId
+                curentPage.value = DETAIL_SCREEN
+                navController.navigate(
+                    Route.Detail.createRoute(contactId.id)
+                )
+                Log.e("TAG", " Id  " + navController.currentBackStackEntry?.id)
 
-             }
+            }
         }
     }
 }

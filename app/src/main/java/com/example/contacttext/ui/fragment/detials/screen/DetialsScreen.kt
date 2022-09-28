@@ -100,7 +100,10 @@ fun DetailScreen(
 
                     selected = false,
                     onClick = {
-                      sendSMS(contact)
+                        val intent = Intent(Intent.ACTION_DIAL)
+                        intent.data = Uri.parse("tel:${contact.phone}")
+                        intent.flags=Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(ContactApplication.instance,intent,null)
                     },
                     modifier = Modifier.wrapContentSize()
                 )
@@ -112,12 +115,7 @@ fun DetailScreen(
 
                     selected = false,
                     onClick = {
-                        val smsIntent = Intent(Intent.ACTION_VIEW)
-                        smsIntent.type = "vnd.android-dir/mms-sms"
-                        smsIntent.putExtra("address", "${contact.phone}")
-                        smsIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        smsIntent.putExtra("sms_body", "Messaage from compose contact")
-                        startActivity(ContactApplication.instance,smsIntent,null)
+                       sendSMS(contact)
                     },
                     modifier = Modifier
                         .padding(0.dp)
